@@ -1,4 +1,3 @@
-
 services:
   app:
     build: .
@@ -6,12 +5,14 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    environment:
+      - TZ=Asia/Dhaka
     env_file: .env
     depends_on:
       postgres:
         condition: service_healthy
       valkey:
-        condition: service_started
+        condition: service_healthy
     cap_add:
       - NET_ADMIN
     sysctls:
@@ -19,17 +20,26 @@ services:
     volumes:
       - ./templates:/app/templates
       - ./static:/app/static
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18.3-alpine3.23
     container_name: routevpn-db
     restart: unless-stopped
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:
+      TZ: Asia/Dhaka
       POSTGRES_USER: routevpn
       POSTGRES_PASSWORD: routevpn
       POSTGRES_DB: routevpn
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U routevpn"]
       interval: 5s
@@ -37,11 +47,20 @@ services:
       retries: 5
 
   valkey:
-    image: valkey/valkey:8-alpine
+    image: valkey/valkey:9.0.3-alpine3.23
     container_name: routevpn-cache
     restart: unless-stopped
+    command: valkey-server /usr/local/etc/valkey/valkey.conf
+    environment:
+      TZ: Asia/Dhaka
     volumes:
       - vkdata:/data
+      - ./config/valkey.conf:/usr/local/etc/valkey/valkey.conf:ro
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   pgdata:

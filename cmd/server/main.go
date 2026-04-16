@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
@@ -21,8 +22,23 @@ import (
 	"github.com/imzami/routevpn-core/internal/worker"
 )
 
+func init() {
+	// Load timezone from TZ environment variable
+	if tz := os.Getenv("TZ"); tz != "" {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			log.Printf("warning: failed to load timezone %s: %v", tz, err)
+		} else {
+			time.Local = loc
+		}
+	}
+}
+
 func main() {
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("config: %v", err)
+	}
 
 	db, err := database.NewPostgres(cfg.DatabaseURL)
 	if err != nil {
@@ -55,12 +71,15 @@ func main() {
 	defer w.Stop()
 
 	engine := html.New("./templates", ".html")
-	engine.Reload(true)
+	// engine.Reload(true) — enable only for local development
 
 	app := fiber.New(fiber.Config{
-		AppName:   "RouteVPN",
-		BodyLimit: 4 * 1024 * 1024,
-		Views:     engine,
+		AppName:      "RouteVPN",
+		BodyLimit:    4 * 1024 * 1024,
+		Views:        engine,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	})
 
 	app.Use(recover.New())
