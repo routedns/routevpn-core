@@ -1,0 +1,5 @@
+.env
+routevpn
+*.exe
+tmp/
+vendor/

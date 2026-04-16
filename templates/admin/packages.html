@@ -1,0 +1,57 @@
+<div class="max-w-7xl mx-auto" x-data="{showForm:false, editId:null}">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold text-white">Packages</h1>
+        <button @click="showForm=!showForm" class="bg-brand hover:bg-brand/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">+ New Package</button>
+    </div>
+
+    <div x-show="showForm" x-cloak class="bg-card border border-border rounded-2xl p-6 mb-6">
+        <form method="POST" action="/admin/packages" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">Name</label>
+                <input type="text" name="name" required placeholder="e.g. 1 Month" class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">Price (BDT)</label>
+                <input type="number" name="price_bdt" step="0.01" min="1" required class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">Duration (Days)</label>
+                <input type="number" name="duration_days" min="1" required class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-brand hover:bg-brand/90 text-white text-sm font-semibold px-6 py-2 rounded-lg transition">Create</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {{range .packages}}
+        <div class="bg-card border border-border rounded-2xl p-6 group" x-data="{editing:false}">
+            <div x-show="!editing">
+                <div class="text-lg font-bold text-white mb-1">{{.Name}}</div>
+                <div class="text-3xl font-bold text-brand mb-1">৳{{.PriceBDT.StringFixed 2}}</div>
+                <div class="text-sm text-gray-400 mb-4">{{.DurationDays}} days</div>
+                <div class="flex gap-2">
+                    <button @click="editing=true" class="text-xs bg-white/5 hover:bg-white/10 border border-border text-gray-300 px-3 py-1.5 rounded-lg transition">Edit</button>
+                    <form method="POST" action="/admin/packages/{{.ID}}" onsubmit="this.querySelector('[name=_method]').value='DELETE'">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 px-3 py-1.5 rounded-lg transition">Delete</button>
+                    </form>
+                </div>
+            </div>
+            <form x-show="editing" x-cloak method="POST" action="/admin/packages/{{.ID}}" class="space-y-3">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="text" name="name" value="{{.Name}}" class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50">
+                <input type="number" name="price_bdt" step="0.01" value="{{.PriceBDT.StringFixed 2}}" class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50">
+                <input type="number" name="duration_days" value="{{.DurationDays}}" class="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/50">
+                <div class="flex gap-2">
+                    <button type="submit" class="text-xs bg-brand hover:bg-brand/90 text-white px-4 py-1.5 rounded-lg transition">Save</button>
+                    <button type="button" @click="editing=false" class="text-xs bg-white/5 hover:bg-white/10 border border-border text-gray-300 px-3 py-1.5 rounded-lg transition">Cancel</button>
+                </div>
+            </form>
+        </div>
+        {{else}}
+        <div class="col-span-full text-center py-12 text-gray-500">No packages defined yet. Create one above.</div>
+        {{end}}
+    </div>
+</div>
