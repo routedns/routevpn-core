@@ -15,9 +15,6 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    sysctls:
-      - net.ipv4.ip_forward=1
-      - net.ipv4.conf.all.src_valid_mark=1
     volumes:
       - ./templates:/app/templates
       - ./static:/app/static
