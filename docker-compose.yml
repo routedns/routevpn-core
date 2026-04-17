@@ -44,7 +44,7 @@ services:
     environment:
       - TZ=Asia/Dhaka
       - DATABASE_URL=postgres://routevpn:routevpn@localhost:5432/routevpn?sslmode=disable
-      - VALKEY_URL=redis://localhost:6379
+      - VALKEY_URL=localhost:6379
     env_file: .env
     depends_on:
       postgres:
