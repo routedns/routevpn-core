@@ -33,14 +33,10 @@ COPY --from=awg-go-builder /amneziawg-go /usr/bin/amneziawg-go
 RUN chmod +x /usr/bin/awg /usr/bin/awg-quick /usr/bin/amneziawg-go \
     && ln -s /usr/bin/amneziawg-go /usr/bin/wireguard-go
 
-RUN adduser -D -h /app appuser
 WORKDIR /app
 COPY --from=builder /routevpn .
 COPY templates/ ./templates/
 COPY static/ ./static/
-RUN chown -R appuser:appuser /app
 
-# Requires --cap-add NET_ADMIN --cap-add NET_RAW at runtime for VPN/iptables
-USER appuser
 EXPOSE 3000
 CMD ["./routevpn"]
