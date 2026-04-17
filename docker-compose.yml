@@ -1,4 +1,41 @@
 services:
+  postgres:
+    image: postgres:18.3-alpine3.23
+    container_name: routevpn-db
+    restart: unless-stopped
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    environment:
+      TZ: Asia/Dhaka
+      POSTGRES_USER: routevpn
+      POSTGRES_PASSWORD: routevpn
+      POSTGRES_DB: routevpn
+    network_mode: "host"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U routevpn -d routevpn"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:9.0.3-alpine3.23
+    container_name: routevpn-cache
+    restart: unless-stopped
+    command: valkey-server /usr/local/etc/valkey/valkey.conf
+    environment:
+      TZ: Asia/Dhaka
+    network_mode: "host"
+    volumes:
+      - vkdata:/data
+      - ./config/valkey.conf:/usr/local/etc/valkey/valkey.conf:ro
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   app:
     build: .
     container_name: routevpn
@@ -6,6 +43,8 @@ services:
     network_mode: "host"
     environment:
       - TZ=Asia/Dhaka
+      - DATABASE_URL=postgres://routevpn:routevpn@localhost:5432/routevpn?sslmode=disable
+      - VALKEY_URL=redis://localhost:6379
     env_file: .env
     depends_on:
       postgres:
@@ -25,45 +64,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  postgres:
-    image: postgres:18.3-alpine3.23
-    container_name: routevpn-db
-    restart: unless-stopped
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
-    environment:
-      TZ: Asia/Dhaka
-      POSTGRES_USER: routevpn
-      POSTGRES_PASSWORD: routevpn
-      POSTGRES_DB: routevpn
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql
-      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U routevpn -d routevpn"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  valkey:
-    image: valkey/valkey:9.0.3-alpine3.23
-    container_name: routevpn-cache
-    restart: unless-stopped
-    command: valkey-server /usr/local/etc/valkey/valkey.conf
-    environment:
-      TZ: Asia/Dhaka
-    ports:
-      - "6379:6379"
-    volumes:
-      - vkdata:/data
-      - ./config/valkey.conf:/usr/local/etc/valkey/valkey.conf:ro
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
 volumes:
   pgdata:
