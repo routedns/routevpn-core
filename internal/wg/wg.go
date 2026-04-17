@@ -46,10 +46,10 @@ func GeneratePresharedKey() (string, error) {
 
 func AddPeer(iface, publicKey, presharedKey, allowedIP string) error {
 	if isDryRun() {
-		log.Printf("[wg-dry] add peer %s allowed-ips %s on %s", publicKey[:8]+"...", allowedIP, iface)
+		log.Printf("[awg-dry] add peer %s allowed-ips %s on %s", publicKey[:8]+"...", allowedIP, iface)
 		return nil
 	}
-	cmd := exec.Command("wg", "set", iface,
+	cmd := exec.Command("awg", "set", iface,
 		"peer", publicKey,
 		"preshared-key", "/dev/stdin",
 		"allowed-ips", allowedIP,
@@ -63,10 +63,10 @@ func AddPeer(iface, publicKey, presharedKey, allowedIP string) error {
 
 func RemovePeer(iface, publicKey string) error {
 	if isDryRun() {
-		log.Printf("[wg-dry] remove peer %s", publicKey[:8]+"...")
+		log.Printf("[awg-dry] remove peer %s", publicKey[:8]+"...")
 		return nil
 	}
-	cmd := exec.Command("wg", "set", iface, "peer", publicKey, "remove")
+	cmd := exec.Command("awg", "set", iface, "peer", publicKey, "remove")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("%s: %w", string(out), err)
 	}

@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+      - "51820:51820/udp"
     environment:
       - TZ=Asia/Dhaka
     env_file: .env
@@ -15,11 +16,14 @@ services:
         condition: service_healthy
     cap_add:
       - NET_ADMIN
+      - NET_RAW
     sysctls:
       - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
     volumes:
       - ./templates:/app/templates
       - ./static:/app/static
+      - /dev/net/tun:/dev/net/tun
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
       interval: 30s
@@ -38,10 +42,10 @@ services:
       POSTGRES_PASSWORD: routevpn
       POSTGRES_DB: routevpn
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U routevpn"]
+      test: ["CMD-SHELL", "pg_isready -U routevpn -d routevpn"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -64,4 +68,4 @@ services:
 
 volumes:
   pgdata:
-  vkdata:
+  vkdata: 
